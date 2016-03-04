@@ -80,9 +80,21 @@ var define;
             url = res.url || res.uri || id;
         }
 
-        createScript(url, onerror && function () {
-            onerror(id);
-        });
+        if (res.type === 'css') {
+            require.loadCss({
+                url: url,
+                onload: function() {
+                    define(id, 'css');
+                },
+                onerror: function() {
+                    onerror && onerror(id);
+                }
+            });
+        } else {
+            createScript(url, onerror && function () {
+                onerror(id);
+            });
+        }
     };
 
     define = function (id, factory) {
@@ -237,9 +249,12 @@ var define;
                 sty.innerHTML = cfg.content;
             }
             head.appendChild(sty);
+            cfg.onload && cfg.onload();
         }
         else if (cfg.url) {
             var link = document.createElement('link');
+            cfg.onload && (link.onload = cfg.onload);
+            cfg.onerror && (link.onerror = cfg.onerror);
             link.href = cfg.url;
             link.rel = 'stylesheet';
             link.type = 'text/css';
